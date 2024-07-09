@@ -11,6 +11,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ThemeProvider } from "@mui/material/styles";
 import NotFound from "./pages/not_found";
+import Cookies from "js-cookie";
 import LandingPage from "./pages/landing_page";
 import theme from "./theme";
 import ErrorPage from "./pages/error";
@@ -24,6 +25,40 @@ export default function App() {
     mobileNumber: "",
   });
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  function getMappedUser(userInfo: any): User {
+    return {
+    email: userInfo?.email || "",
+    id: userInfo?.sub || "",
+    name: userInfo?.first_name + " " + userInfo?.last_name,
+    mobileNumber: userInfo?.mobile_number || "",
+    };
+    }
+    useEffect(() => {
+    setIsAuthLoading(true);
+    if (Cookies.get("userinfo")) {
+    // We are here after a login
+    const userInfoCookie = Cookies.get("userinfo");
+    sessionStorage.setItem("userInfo", userInfoCookie || "");
+    Cookies.remove("userinfo");
+    var userInfo = userInfoCookie ? JSON.parse(atob(userInfoCookie)) : {};
+    setSignedIn(true);
+    setUser(getMappedUser(userInfo));
+    } else if (sessionStorage.getItem("userInfo")) {
+    // We have already logged in
+    var userInfo = JSON.parse(atob(sessionStorage.getItem("userInfo")!));
+    setSignedIn(true);
+    setUser(getMappedUser(userInfo));
+    } else {
+    console.log("User is not signed in");
+    if (
+    window.location.pathname !== "/auth/login" &&
+    window.location.pathname !== "/"
+    ) {
+    window.location.pathname = "/auth/login";
+    }
+    }
+    setIsAuthLoading(false);
+    }, []);
 
   if (isAuthLoading) {
     return <div>User authenticating...</div>;
